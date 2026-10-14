@@ -1,0 +1,18 @@
+{
+  "agents": [
+    {
+      "name": "codex",
+      "type": "codex",
+      "binary_env": "CODEX_BIN",
+      "repo_env": "CODEX_REPO",
+      "home_env": "GATEWAY_CODEX_HOME"
+    },
+    {
+      "name": "hermes",
+      "type": "hermes",
+      "base_url_env": "HERMES_BASE_URL",
+      "api_key_env": "HERMES_API_KEY",
+      "model_env": "HERMES_MODEL"
+    }
+  ]
+}

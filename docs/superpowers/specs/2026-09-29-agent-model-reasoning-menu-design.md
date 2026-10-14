@@ -1,0 +1,17 @@
+# Agent Model and Reasoning Menu Design
+
+Approved chat design (2026-09-29): preserve existing controls while adding model and reasoning selection, with `high` as the default reasoning effort. Server currently has only Codex registered; Hermes selection remains visible in the published Feishu menu but has no server-side backend until deployed.
+
+## Feishu UX
+
+Three top-level entries: `选择 Agent` (existing Codex/Hermes/list), `参数设置` (`选择模型`, `思考强度`), `更多` (`新建会话`, `帮助`). The two parameter items emit `application.bot.menu_v6` event keys `settings_model` and `settings_reasoning`. Gateway sends an interactive card with a server-controlled whitelist of options for the currently selected and deployed Agent. `card.action.trigger` is subscribed via the existing authenticated long connection; no public callback URL. Card action is synchronous: validate actor, chat, current Agent, action payload, choice and the setting value captured when the card was rendered; atomically persist setting/event ID and return a short toast. Duplicate/stale/unauthorized actions cannot modify state. If no Agent is selected or backend is not deployed, reply with a friendly explanation without offering a misleading card. Keep `/use`, `/agents`, `/reset`, `/help`, and `@alias` text shortcuts.
+
+## Settings, model and session semantics
+
+Settings are stored per Feishu private chat + user + Agent, alongside existing continuations. Reasoning effort defaults to `high` until the user changes it; allow `low`, `medium`, `high`, `xhigh` only if adapter supports the choice. First deployment advertises only `gpt-5.6-luna`, `gpt-5.6-sol`, `gpt-5.6-terra` for Codex (confirmed by server provider `/models`). The current server's existing default `gpt-5.6-luna` stays in effect before explicit model selection. Reject arbitrary model strings, unknown callback actions or unsupported model/effort pairings. On model change clear only that Agent's continuation and tell the user a new session starts; changing effort applies to the next turn without resetting. Applying a setting never runs an Agent turn.
+
+Extend the `Agent.Run` contract with validated per-turn model and effort options. Codex CLI should pass model/effort overrides on both `exec` and `exec resume`, without letting chat text become process flags, and retain its fixed repository, read-only sandbox, separate UID, and filtered child environment. Hermes adapter can consume the same options when actually deployed; unsupported options must fail closed instead of being silently ignored. Scope/memory isolation and existing duplicate-event protection remain.
+
+## Safety and rollout
+
+Do not fetch or display all third-party models to users by default: model availability/cost is operator-curated, not an arbitrary provider proxy. Do not log keys, prompts or card tokens. Graceful restart must preserve current chat selection and continuation unless a model is actually changed. Go tests first: isolated preference storage and migration from old state file, per-agent/person independence, invalid options, stale/repeated callbacks, CLI command arguments, Hermes behavior, card JSON encoding and routing. Verify ordinary unit/race/vet/build and opt-in live Codex initial+resume using a non-default model. Cross-compile static Linux/amd64, stage to the existing go-runtime container and restart without exposing ports or secrets. Then add Feishu card callback, update menu and publish a version restricted to existing member only; verify with user click before claiming full end-to-end completion.

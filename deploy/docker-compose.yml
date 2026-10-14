@@ -1,0 +1,24 @@
+services:
+  feishu-agent-gateway:
+    image: ${GO_RUNTIME_IMAGE:?Set GO_RUNTIME_IMAGE to a trusted runtime image}
+    container_name: feishu-agent-gateway
+    init: true
+    user: "0:0"
+    working_dir: /app
+    command: ["/bin/sh", "/app/bin/start.sh"]
+    restart: unless-stopped
+    stop_grace_period: 11m
+    read_only: true
+    cap_drop: ["ALL"]
+    cap_add: ["SETUID", "SETGID"]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,mode=1777,size=32m
+    volumes:
+      - ./bin:/app/bin:ro
+      - ./repo:/app/repo:ro
+      - ./config/agents.json:/app/config/agents.json:ro
+      - ./private/.env:/app/private/.env:ro
+      - ./private/codex-home:/app/codex-home:rw
+      - ./state:/app/state:rw

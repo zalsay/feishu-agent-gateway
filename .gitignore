@@ -1,0 +1,14 @@
+.env
+*.db
+state.json
+state.json.tmp
+*.log
+
+.local/
+
+# Local credentials and setup screenshots
+.env.*
+!.env.example
+feishu-create-confirm.png
+feishu-scopes-confirm.png
+.DS_Store
